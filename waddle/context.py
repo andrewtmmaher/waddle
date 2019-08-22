@@ -25,7 +25,7 @@ class ContextData(object):
     @classmethod
     def from_text(cls, text, window_size):
         couples, labels = skipgrams(
-            text.index_text(), text.vocabulary_size, window_size=window_size)
+            text.encode_text(), text.vocabulary_size, window_size=window_size)
         target, context = zip(*couples)
         return cls(
             np.array(target, dtype="int32"),

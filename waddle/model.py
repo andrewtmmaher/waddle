@@ -71,8 +71,8 @@ def train_embedding_model(model, similarity_callback, context_data, epochs):
     for epoch_index in range(epochs):
         training_example_index = np.random.randint(0, len(context_data.labels) - 1)
 
-        arr_1[0, ] = context_data.word_target[training_example_index]
-        arr_2[0, ] = context_data.word_context[training_example_index]
+        arr_1[0, ] = context_data.target[training_example_index]
+        arr_2[0, ] = context_data.context[training_example_index]
         arr_3[0, ] = context_data.labels[training_example_index]
 
         loss = model.train_on_batch([arr_1, arr_2], arr_3)

@@ -2,6 +2,12 @@
 from collections import Counter
 
 
+def load_chat_from_path(path):
+    with open(path) as f:
+        chat = f.readlines()
+    return chat
+
+
 def remove_timestamp(message):
     """Remove the timestamp from a single message."""
     return message[20:]
