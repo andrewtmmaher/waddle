@@ -1,8 +1,9 @@
+import pickle
 import numpy as np
 from tensorflow.keras.preprocessing.sequence import skipgrams
 
 
-class ContextData(object):
+class TrainingData(object):
 
     def __init__(self, target, context, labels):
         """
@@ -32,3 +33,13 @@ class ContextData(object):
             np.array(context, dtype="int32"),
             labels
         )
+
+    def dump(self, path):
+        with open(path, 'wb') as f:
+            pickle.dump(self, f)
+
+    @staticmethod
+    def load(path):
+        with open(path, 'rb') as f:
+            obj = pickle.load(f)
+        return obj

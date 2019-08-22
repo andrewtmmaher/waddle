@@ -1,11 +1,12 @@
 #!/usr/bin/env python
+"""Build a character embedding model."""
 import argparse
-
+import os
 from model import build_embedding_models, train_embedding_model
 from callback import SimilarityCallback
 from whatsapp import clean, load_chat_from_path
 from text import Text
-from context import ContextData
+from context import TrainingData
 
 
 EMBEDDING_DIMENSION = 2
@@ -19,8 +20,8 @@ EVALUATION_CHARACTERS = ['a', 'A', 'R', 'r']
 def run(raw_whatsapp_chat, embedding_dimension, window_size,
         number_training_steps, number_evaluation_neighbours):
 
+    print('Loading and parsing text')
     whatsapp_chat = clean(raw_whatsapp_chat)
-
     text = Text(whatsapp_chat)
 
     model, validation_model = build_embedding_models(text.vocabulary_size, embedding_dimension)
@@ -30,13 +31,22 @@ def run(raw_whatsapp_chat, embedding_dimension, window_size,
     similarity_callback = SimilarityCallback(
         number_evaluation_neighbours, validation_examples, text, validation_model)
 
-    context_data = ContextData.from_text(text, window_size)
+    if os.path.exists('training_data.pkl'):
+        print('Loading training data from file')
+        training_data = TrainingData.load('training_data.pkl')
+    else:
+        print('Generating training data from input text')
+        training_data = TrainingData.from_text(text, window_size)
+        print('Dumping training data to file')
+        training_data.dump('training_data.pkl')
 
+    print('Training the embedding')
     train_embedding_model(
-        model, similarity_callback, context_data, number_training_steps)
+        model, training_data, similarity_callback, number_training_steps)
 
 
 if __name__ == '__main__':
+
     print('Running character embedding')
 
     parser = argparse.ArgumentParser()
@@ -45,7 +55,8 @@ if __name__ == '__main__':
     parser.add_argument(
         '--embedding_dimension', type=int, help='Size of embedding')
     parser.add_argument(
-        '--number_epochs', type=int, help='Number of samples on which to train')
+        '--number_training_steps', type=int, help=
+        'Number of samples on which to train')
     args = parser.parse_args()
 
     print('Loading chat from {}'.format(args.whatsap_chat_path))

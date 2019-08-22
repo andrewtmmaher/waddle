@@ -63,22 +63,34 @@ def build_embedding_models(vocabulary_size, embedding_dimension):
     return context_model, similarity_model
 
 
-def train_embedding_model(model, similarity_callback, context_data, epochs):
+def train_embedding_model(model, training_data, similarity_callback,
+                          number_training_steps):
+    """
+    Train the context classification model.
+
+    Parameters
+    ----------
+    model : tf.keras.Model
+    training_data : waddle.text.Text
+    similarity_callback : waddle.callback.SimilarityCallback
+    number_training_steps : int
+        Number of training steps to take in the gradient descent.
+    """
     arr_1 = np.zeros((1,))
     arr_2 = np.zeros((1,))
     arr_3 = np.zeros((1,))
 
-    for epoch_index in range(epochs):
-        training_example_index = np.random.randint(0, len(context_data.labels) - 1)
+    for training_step in range(number_training_steps):
+        training_example_index = np.random.randint(0, len(training_data.labels) - 1)
 
-        arr_1[0, ] = context_data.target[training_example_index]
-        arr_2[0, ] = context_data.context[training_example_index]
-        arr_3[0, ] = context_data.labels[training_example_index]
+        arr_1[0] = training_data.target[training_example_index]
+        arr_2[0] = training_data.context[training_example_index]
+        arr_3[0] = training_data.labels[training_example_index]
 
         loss = model.train_on_batch([arr_1, arr_2], arr_3)
 
-        if epoch_index % 1000 == 0:
-            print("Iteration {}, loss={}".format(epoch_index, loss))
+        if training_step % 1000 == 0:
+            print("Iteration {}, loss={}".format(training_step, loss))
 
-        if epoch_index % 10000 == 0:
+        if training_step % 10000 == 0:
             similarity_callback.run_sim()
