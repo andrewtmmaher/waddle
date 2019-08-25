@@ -21,6 +21,62 @@ def load_chat_from_path(path):
     return chat
 
 
+def clean(messages, character_level=True):
+    """Clean Whatsapp chat messages."""
+    if character_level:
+        return _clean_for_characters(messages)
+    return _clean_for_words(messages)
+
+
+def _clean_for_words(messages):
+    """
+    Clean Whatsapp chat messages, to the word-level.
+
+    Parameters
+    ----------
+    messages : list of str
+        List of messages used in a Whatsapp chat.
+
+    Returns
+    -------
+    list of str
+        List of words used in a Whatsapp chat in consecutive order, after
+        various cleaning steps.
+    """
+    chat = ' '.join([_remove_timestamp(message) for message in messages])
+
+    chat = _separate_special_character_words(chat)
+    chat = _replace_phrases(chat)
+
+    words = chat.lower().split(' ')
+
+    return _filter_low_frequency_tokens(words)
+
+
+def _clean_for_characters(messages):
+    """
+    Clean Whatsapp chat messages, to the character-level.
+
+    Parameters
+    ----------
+    messages : list of str
+        List of messages used in a Whatsapp chat.
+
+    Returns
+    -------
+    list of str
+        List of characters used in a Whatsapp chat in consecutive order, after
+        various cleaning steps.
+    """
+    messages = [_remove_timestamp(message) for message in messages]
+    messages = [
+        message for message in messages if _is_message_interesting(message[14:])]
+
+    chat = ''.join([character for message in messages for character in message])
+
+    return _filter_low_frequency_tokens(chat)
+
+
 def _remove_timestamp(message):
     """Remove the timestamp from a single message."""
     return message[20:]
@@ -53,52 +109,3 @@ def _filter_low_frequency_tokens(tokens, minimum_frequency=5):
             high_frequency_tokens.add(token)
 
     return [word for word in token if word in high_frequency_tokens]
-
-
-def clean_for_words(messages):
-    """
-    Clean whatsapp chat messages, to the word-level.
-
-    Parameters
-    ----------
-    messages : list of str
-        List of messages used in a Whatsapp chat.
-
-    Returns
-    -------
-    list of str
-        List of words used in a Whatsapp chat in consecutive order, after
-        various cleaning steps.
-    """
-    chat = ' '.join([_remove_timestamp(message) for message in messages])
-
-    chat = _separate_special_character_words(chat)
-    chat = _replace_phrases(chat)
-
-    words = chat.lower().split(' ')
-
-    return _filter_low_frequency_tokens(words)
-
-
-def clean_for_characters(messages):
-    """
-    Clean Whatsapp chat messages, to the character-level.
-
-    Parameters
-    ----------
-    messages : list of str
-        List of messages used in a Whatsapp chat.
-
-    Returns
-    -------
-    list of str
-        List of characters used in a Whatsapp chat in consecutive order, after
-        various cleaning steps.
-    """
-    messages = [_remove_timestamp(message) for message in messages]
-    messages = [
-        message for message in messages if _is_message_interesting(message[14:])]
-
-    chat = ''.join([character for message in messages for character in message])
-
-    return _filter_low_frequency_tokens(chat)
