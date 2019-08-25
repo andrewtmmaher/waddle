@@ -73,7 +73,6 @@ def _clean_for_characters(messages):
         message for message in messages if _is_message_interesting(message[14:])]
 
     chat = ''.join([character for message in messages for character in message])
-
     return _filter_low_frequency_tokens(chat)
 
 
@@ -108,4 +107,6 @@ def _filter_low_frequency_tokens(tokens, minimum_frequency=5):
         if count >= minimum_frequency:
             high_frequency_tokens.add(token)
 
-    return [word for word in token if word in high_frequency_tokens]
+    print('Number of high-frequency tokens'.format(len(high_frequency_tokens)))
+
+    return [token for token in tokens if token in high_frequency_tokens]

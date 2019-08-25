@@ -4,45 +4,79 @@ import argparse
 import os
 from model import build_embedding_models, train_embedding_model
 from callback import SimilarityCallback
-from whatsapp import clean_for_characters, load_chat_from_path
+from whatsapp import clean, load_chat_from_path
 from text import Text
 from data import TrainingData
 
-# Default arguments for the generation of character embeddings.
+# Default arguments for the generation of token embeddings.
 EMBEDDING_DIMENSION = 64
-WINDOW_SIZE = 3
+CHARACTER_CONTEXT_WINDOW = 2
+WORD_CONTEXT_WINDOW = 5
 NUMBER_EVALUATION_NEIGHBOURS = 5
 NUMBER_TRAINING_STEPS = 1000000
 
 EVALUATION_CHARACTERS = ['a', 'A', 'R', 'x', '1']
+EVALUATION_WORDS = ['andrew', 'run', 'hello', 'london', 'whatsapp']
+
+TRAINING_DATA_PATH = 'training_data-{}-{}.pkl'
 
 
-def run(raw_whatsapp_chat, embedding_dimension, window_size,
-        number_training_steps, number_evaluation_neighbours):
+def generate_embeddings(
+        raw_whatsapp_chat,
+        embedding_dimension,
+        number_training_steps,
+        number_evaluation_neighbours,
+        character_level=True,
+        cache_training_data=False):
+    """
+    Generate embedding vectors at the word- or character-level from a history
+    of Whatsapp messages.
+    """
+    if character_level:
+        evaluation_tokens = EVALUATION_CHARACTERS
+        window_size = CHARACTER_CONTEXT_WINDOW
+    else:
+        evaluation_tokens = EVALUATION_WORDS
+        window_size = WORD_CONTEXT_WINDOW
 
     print('Loading and parsing text')
-    whatsapp_chat = clean_for_characters(raw_whatsapp_chat)
+    whatsapp_chat = clean(raw_whatsapp_chat, character_level=character_level)
+    print('Number of different token instances {}'.format(len(whatsapp_chat)))
+
     text = Text(whatsapp_chat)
 
-    model, validation_model = build_embedding_models(text.vocabulary_size, embedding_dimension)
+    print(
+        'Building embedding for vocabulary size {}'.format(text.vocabulary_size))
 
-    validation_examples = [text.character_to_index[c] for c in EVALUATION_CHARACTERS]
+    model, evaluation_model = build_embedding_models(
+        text.vocabulary_size, embedding_dimension)
+
+    evaluation_examples = [text.token_to_index[c] for c in evaluation_tokens]
 
     similarity_callback = SimilarityCallback(
-        number_evaluation_neighbours, validation_examples, text, validation_model)
+        number_evaluation_neighbours, evaluation_examples, text, evaluation_model)
 
-    if os.path.exists('training_data.pkl'):
-        print('Loading training data from file')
-        training_data = TrainingData.load('training_data.pkl')
-    else:
-        print('Generating training data from input text')
+    if not cache_training_data:
         training_data = TrainingData.from_text(text, window_size)
-        print('Dumping training data to file')
-        training_data.dump('training_data.pkl')
+
+    else:
+        data_type = 'char' if character_level else 'word'
+        training_data_path = TRAINING_DATA_PATH.format(data_type, window_size)
+
+        if os.path.exists(training_data_path):
+            print('Loading training data from file')
+            training_data = TrainingData.load(training_data_path)
+        else:
+            print('Generating training data from input text')
+            training_data = TrainingData.from_text(text, window_size)
+            print('Dumping training data to file')
+            training_data.dump(training_data_path)
 
     print('Training the embedding')
     train_embedding_model(
         model, training_data, similarity_callback, number_training_steps)
+
+    return model
 
 
 if __name__ == '__main__':
@@ -67,10 +101,10 @@ if __name__ == '__main__':
     print('Embedding dimensionality: {}'.format(args.embedding_dimension))
 
     print('Chat contains {} different messages'.format(len(chat_data)))
-    run(
+    generate_embeddings(
         chat_data,
         args.embedding_dimension or EMBEDDING_DIMENSION,
-        WINDOW_SIZE,
         args.number_training_steps or NUMBER_TRAINING_STEPS,
-        NUMBER_EVALUATION_NEIGHBOURS
+        NUMBER_EVALUATION_NEIGHBOURS,
+        cache_training_data=True
     )
