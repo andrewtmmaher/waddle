@@ -4,24 +4,24 @@ import argparse
 import os
 from model import build_embedding_models, train_embedding_model
 from callback import SimilarityCallback
-from whatsapp import clean, load_chat_from_path
+from whatsapp import clean_for_characters, load_chat_from_path
 from text import Text
 from data import TrainingData
 
 # Default arguments for the generation of character embeddings.
-EMBEDDING_DIMENSION = 2
+EMBEDDING_DIMENSION = 64
 WINDOW_SIZE = 3
 NUMBER_EVALUATION_NEIGHBOURS = 5
-NUMBER_TRAINING_STEPS = 10000
+NUMBER_TRAINING_STEPS = 1000000
 
-EVALUATION_CHARACTERS = ['a', 'A', 'R', 'r']
+EVALUATION_CHARACTERS = ['a', 'A', 'R', 'x', '1']
 
 
 def run(raw_whatsapp_chat, embedding_dimension, window_size,
         number_training_steps, number_evaluation_neighbours):
 
     print('Loading and parsing text')
-    whatsapp_chat = clean(raw_whatsapp_chat)
+    whatsapp_chat = clean_for_characters(raw_whatsapp_chat)
     text = Text(whatsapp_chat)
 
     model, validation_model = build_embedding_models(text.vocabulary_size, embedding_dimension)

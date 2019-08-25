@@ -78,7 +78,7 @@ def train_embedding_model(model, training_data, similarity_callback,
     """
     for training_step in range(number_training_steps):
         training_example_index = np.random.randint(
-            0, len(training_data.labels) - 1, (64,))
+            0, len(training_data.labels) - 1, (4,))
 
         arr_1 = training_data.target[list(training_example_index)]
         arr_2 = training_data.context[list(training_example_index)]
