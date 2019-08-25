@@ -25,21 +25,38 @@ class TrainingData(object):
 
     @classmethod
     def from_text(cls, text, window_size):
+        """
+        Generate context-based training data from a text string.
+
+        Builds a training dataset that can be used to identify whether two
+        characters are found within a certain window of each other.
+
+        Parameters
+        ----------
+        text : text.Text
+        window_size : int
+
+        Returns
+        -------
+        This object.
+        """
         couples, labels = skipgrams(
             text.encode_text(), text.vocabulary_size, window_size=window_size)
         target, context = zip(*couples)
         return cls(
-            np.array(target, dtype="int32"),
-            np.array(context, dtype="int32"),
-            labels
+            np.array(target, dtype='int32'),
+            np.array(context, dtype='int32'),
+            np.array(labels, dtype='int32')
         )
 
     def dump(self, path):
+        """Dump the data to file."""
         with open(path, 'wb') as f:
             pickle.dump(self, f)
 
     @staticmethod
     def load(path):
+        """Load the data from file."""
         with open(path, 'rb') as f:
             obj = pickle.load(f)
         return obj

@@ -6,11 +6,11 @@ from model import build_embedding_models, train_embedding_model
 from callback import SimilarityCallback
 from whatsapp import clean, load_chat_from_path
 from text import Text
-from context import TrainingData
+from data import TrainingData
 
-
+# Default arguments for the generation of character embeddings.
 EMBEDDING_DIMENSION = 2
-WINDOW_SIZE = 2
+WINDOW_SIZE = 3
 NUMBER_EVALUATION_NEIGHBOURS = 5
 NUMBER_TRAINING_STEPS = 10000
 
@@ -50,17 +50,18 @@ if __name__ == '__main__':
     print('Running character embedding')
 
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        'whatsap_chat_path', type=str, help='File containing Whatsapp chat log')
-    parser.add_argument(
-        '--embedding_dimension', type=int, help='Size of embedding')
-    parser.add_argument(
-        '--number_training_steps', type=int, help=
-        'Number of samples on which to train')
+    parser.add_argument('whatsap_chat_path', type=str)
+    parser.add_argument('--embedding_dimension', type=int)
+    parser.add_argument('--number_training_steps', type=int)
+    parser.add_argument('--test_mode', type=bool)
     args = parser.parse_args()
 
     print('Loading chat from {}'.format(args.whatsap_chat_path))
     chat_data = load_chat_from_path(args.whatsap_chat_path)
+
+    if args.test_mode:
+        print('In test mode.')
+        chat_data = chat_data[:100]
 
     print('Number of training steps: {}'.format(args.number_training_steps))
     print('Embedding dimensionality: {}'.format(args.embedding_dimension))
