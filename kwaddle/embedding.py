@@ -2,11 +2,11 @@
 """Build a character embedding model."""
 import argparse
 import os
-from model import build_embedding_models, train_embedding_model
-from callback import SimilarityCallback
-from whatsapp import clean, load_chat_from_path
-from text import Text
-from data import TrainingData
+from kwaddle.model import build_embedding_models, train_embedding_model
+from kwaddle.callback import SimilarityCallback
+from kwaddle.whatsapp import clean, load_chat_from_path
+from kwaddle.text import Text
+from kwaddle.data import TrainingData
 
 # Default arguments for the generation of token embeddings.
 EMBEDDING_DIMENSION = 64
