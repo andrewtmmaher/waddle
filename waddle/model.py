@@ -76,13 +76,16 @@ def train_embedding_model(model, training_data, similarity_callback,
     number_training_steps : int
         Number of training steps to take in the gradient descent.
     """
-    for training_step in range(number_training_steps):
-        training_example_index = np.random.randint(
-            0, len(training_data.labels) - 1, (4,))
+    arr_1 = np.zeros((1,))
+    arr_2 = np.zeros((1,))
+    arr_3 = np.zeros((1,))
 
-        arr_1 = training_data.target[list(training_example_index)]
-        arr_2 = training_data.context[list(training_example_index)]
-        arr_3 = training_data.labels[list(training_example_index)]
+    for training_step in range(number_training_steps):
+        training_example_index = np.random.randint(0, len(training_data.labels) - 1)
+
+        arr_1[0] = training_data.target[training_example_index]
+        arr_2[0] = training_data.context[training_example_index]
+        arr_3[0] = training_data.labels[training_example_index]
 
         loss = model.train_on_batch([arr_1, arr_2], arr_3)
 
