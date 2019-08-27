@@ -1,4 +1,4 @@
-# Whatapp chat model (Waddle)
+# Keras WhatApp chat model (KWaddle)
 
 Small Python library to perform machine learning on Whatsapp chat logs.
 
