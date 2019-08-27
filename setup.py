@@ -6,7 +6,7 @@ with open('README.md', 'r') as fh:
 setuptools.setup(
     name='kwaddle',
     version='0.1',
-    scripts=['waddle/embedding.py'],
+    scripts=['kwaddle/embedding.py'],
     author='Andrew Maher',
     author_email='andrewtmmaher@gmail.com',
     description='',
