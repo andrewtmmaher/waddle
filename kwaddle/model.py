@@ -98,3 +98,35 @@ def train_embedding_model(model, training_data, similarity_callback,
             if total_loss < min_loss:
                 min_loss = total_loss
                 model.save('model-nadam.hd5')
+
+
+def build_word_prediction_model(lstm_dimension, embedding_dimension,
+                                vocabulary_size, sequence_length):
+    """
+
+    Parameters
+    ----------
+    lstm_dimension : int
+        Latent dimension of the LSTM layer.
+    embedding_dimension : int
+        Latent dimension of the embedding layer.
+    vocabulary_size : int
+        Number of different tokens fed into the model.
+    sequence_length : int
+        Size of the sequence from which the model makes predictions.
+
+    Returns
+    -------
+
+    """
+    model = Sequential([
+        layers.Embedding(
+            vocabulary_size, embedding_dimension, input_length=sequence_length, name='pretrained_embedding'),
+        layers.LSTM(
+            lstm_dimension, input_shape=(sequence_length, embedding_dimension)),
+        layers.Dense(vocabulary_size, activation='softmax')
+    ])
+
+    model.get_layer('pretrained_embedding').trainable = False
+
+    return model
