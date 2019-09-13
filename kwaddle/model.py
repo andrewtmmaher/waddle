@@ -100,33 +100,45 @@ def train_embedding_model(model, training_data, similarity_callback,
                 model.save('model-nadam.hd5')
 
 
-def build_word_prediction_model(lstm_dimension, embedding_dimension,
-                                vocabulary_size, sequence_length):
+def build_token_prediction_model(lstm_dimension, sequence_length, embeddings):
     """
+    Build a model for predicting the next token in a sequence
 
     Parameters
     ----------
     lstm_dimension : int
         Latent dimension of the LSTM layer.
-    embedding_dimension : int
-        Latent dimension of the embedding layer.
-    vocabulary_size : int
-        Number of different tokens fed into the model.
     sequence_length : int
         Size of the sequence from which the model makes predictions.
+    embeddings : np.ndarray
+        Matrix of pre-trained token embeddings. The matrix should have shape
+        (vocabulary_size, embedding_dimension).
 
     Returns
     -------
-
+    tensorflow.keras.Sequential
     """
+    vocabulary_size, embedding_dimension = embeddings.shape
+
     model = Sequential([
         layers.Embedding(
-            vocabulary_size, embedding_dimension, input_length=sequence_length, name='pretrained_embedding'),
+            vocabulary_size,
+            embedding_dimension,
+            input_length=sequence_length,
+            name='pretrained_embedding',
+            trainable=False,
+            weights=[embeddings]
+        ),
         layers.LSTM(
-            lstm_dimension, input_shape=(sequence_length, embedding_dimension)),
-        layers.Dense(vocabulary_size, activation='softmax')
+            lstm_dimension,
+            input_shape=(sequence_length, embedding_dimension)
+        ),
+        layers.Dense(
+            vocabulary_size,
+            activation='softmax'
+        )
     ])
 
-    model.get_layer('pretrained_embedding').trainable = False
+    model.compile(loss='sparse_categorical_crossentropy', optimizer='nadam')
 
     return model
