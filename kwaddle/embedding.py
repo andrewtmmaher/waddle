@@ -2,6 +2,9 @@
 """Build a character embedding model."""
 import argparse
 import os
+import sys
+import pickle
+sys.path.append('.')
 from kwaddle.model import build_embedding_models, train_embedding_model
 from kwaddle.callback import SimilarityCallback
 from kwaddle.whatsapp import clean, load_chat_from_path
@@ -9,16 +12,18 @@ from kwaddle.text import Text
 from kwaddle.data import TrainingData
 
 # Default arguments for the generation of token embeddings.
-EMBEDDING_DIMENSION = 64
+EMBEDDING_DIMENSION = 100
 CHARACTER_CONTEXT_WINDOW = 2
-WORD_CONTEXT_WINDOW = 5
+WORD_CONTEXT_WINDOW = 10
 NUMBER_EVALUATION_NEIGHBOURS = 5
-NUMBER_TRAINING_STEPS = 1000000
+NUMBER_TRAINING_STEPS = 100000000
 
 EVALUATION_CHARACTERS = ['a', 'A', 'R', 'x', '1']
-EVALUATION_WORDS = ['andrew', 'run', 'hello', 'london', 'whatsapp']
+EVALUATION_WORDS = [
+    'andrew', 'run', 'hello', 'jokes', '.', 'lol', 'merci']
 
 TRAINING_DATA_PATH = 'training_data-{}-{}.pkl'
+TEXT_DATA_PATH = 'text_data-{}-{}.pkl'
 
 
 def generate_embeddings(
@@ -43,7 +48,20 @@ def generate_embeddings(
     whatsapp_chat = clean(raw_whatsapp_chat, character_level=character_level)
     print('Number of different token instances {}'.format(len(whatsapp_chat)))
 
-    text = Text(whatsapp_chat)
+    if not cache_training_data:
+        text = Text(whatsapp_chat)
+    else:
+        data_type = 'char' if character_level else 'word'
+        text_data_path = TEXT_DATA_PATH.format(data_type, window_size)
+
+        if os.path.exists(text_data_path):
+            print('Loading text data from file')
+            text = pickle.load(open(text_data_path, 'rb'))
+        else:
+            print('Generating text data from input text')
+            text = Text(whatsapp_chat)
+            print('Dumping training data to file')
+            pickle.dump(text, open(text_data_path, 'wb'))
 
     print(
         'Building embedding for vocabulary size {}'.format(text.vocabulary_size))
@@ -106,5 +124,6 @@ if __name__ == '__main__':
         args.embedding_dimension or EMBEDDING_DIMENSION,
         args.number_training_steps or NUMBER_TRAINING_STEPS,
         NUMBER_EVALUATION_NEIGHBOURS,
-        cache_training_data=True
+        cache_training_data=True,
+        character_level=False
     )

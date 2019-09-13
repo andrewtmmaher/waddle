@@ -1,6 +1,6 @@
 import pickle
 import numpy as np
-from tensorflow.keras.preprocessing.sequence import skipgrams
+from tensorflow.keras.preprocessing.sequence import skipgrams, make_sampling_table
 
 
 class TrainingData(object):
@@ -40,8 +40,9 @@ class TrainingData(object):
         -------
         This object.
         """
+        sampling_table = make_sampling_table(text.vocabulary_size)
         couples, labels = skipgrams(
-            text.encode_text(), text.vocabulary_size, window_size=window_size)
+            text.encode_text(), text.vocabulary_size, window_size=window_size, sampling_table=sampling_table)
         target, context = zip(*couples)
         return cls(
             np.array(target, dtype='int32'),

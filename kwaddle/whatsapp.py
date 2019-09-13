@@ -107,6 +107,6 @@ def _filter_low_frequency_tokens(tokens, minimum_frequency=5):
         if count >= minimum_frequency:
             high_frequency_tokens.add(token)
 
-    print('Number of high-frequency tokens'.format(len(high_frequency_tokens)))
+    print('Number of high-frequency tokens: {}'.format(len(high_frequency_tokens)))
 
     return [token for token in tokens if token in high_frequency_tokens]
