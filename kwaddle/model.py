@@ -1,11 +1,11 @@
 """Keras neural networks for different NLP tasks."""
 import numpy as np
-from tensorflow.keras import Model
-from tensorflow.keras.layers import Input, Dense, Reshape, Embedding, dot
+from tensorflow.keras import Model, Sequential
+from tensorflow.keras import layers
 
 
 def _reshape_embedding(input, embedding, name):
-    return Reshape((embedding.output_dim, 1), name=name)(embedding(input))
+    return layers.Reshape((embedding.output_dim, 1), name=name)(embedding(input))
 
 
 def build_embedding_models(vocabulary_size, embedding_dimension):
@@ -41,23 +41,23 @@ def build_embedding_models(vocabulary_size, embedding_dimension):
     context_model : tensorflow.keras.Model
     similarity_model : tensorflow.keras.Model
     """
-    input_target = Input((1,), name='target_input')
-    input_context = Input((1,), name='context_input')
+    input_target = layers.Input((1,), name='target_input')
+    input_context = layers.Input((1,), name='context_input')
 
-    embedding = Embedding(vocabulary_size, embedding_dimension, input_length=1, name='embedding')
+    embedding = layers.Embedding(vocabulary_size, embedding_dimension, input_length=1, name='embedding')
 
     target = _reshape_embedding(input_target, embedding, name='embedded_input')
     context = _reshape_embedding(input_context, embedding, name='embedded_context')
 
-    dot_product = dot([target, context], axes=1, normalize=False, name='combine_input_context')
-    dot_product = Reshape((1,), name='reshape_combination')(dot_product)
+    dot_product = layers.dot([target, context], axes=1, normalize=False, name='combine_input_context')
+    dot_product = layers.Reshape((1,), name='reshape_combination')(dot_product)
 
-    output = Dense(1, activation='sigmoid', name='sigmoid_activation')(dot_product)
+    output = layers.Dense(1, activation='sigmoid', name='sigmoid_activation')(dot_product)
 
     context_model = Model(inputs=[input_target, input_context], outputs=output, name='skipgram_model')
-    context_model.compile(loss='binary_crossentropy', optimizer='rmsprop')
+    context_model.compile(loss='binary_crossentropy', optimizer='nadam')
 
-    similarity = dot([target, context], axes=1, normalize=True)
+    similarity = layers.dot([target, context], axes=1, normalize=True)
     similarity_model = Model(inputs=[input_target, input_context], outputs=similarity)
 
     return context_model, similarity_model
@@ -76,21 +76,25 @@ def train_embedding_model(model, training_data, similarity_callback,
     number_training_steps : int
         Number of training steps to take in the gradient descent.
     """
-    arr_1 = np.zeros((1,))
-    arr_2 = np.zeros((1,))
-    arr_3 = np.zeros((1,))
+    total_loss = 0
+    min_loss = float('inf')
 
     for training_step in range(number_training_steps):
-        training_example_index = np.random.randint(0, len(training_data.labels) - 1)
+        training_example_index = np.random.randint(0, len(training_data.labels) - 1, size=256)
 
-        arr_1[0] = training_data.target[training_example_index]
-        arr_2[0] = training_data.context[training_example_index]
-        arr_3[0] = training_data.labels[training_example_index]
+        arr_1 = training_data.target[training_example_index]
+        arr_2 = training_data.context[training_example_index]
+        arr_3 = training_data.labels[training_example_index]
 
-        loss = model.train_on_batch([arr_1, arr_2], arr_3)
+        total_loss += model.train_on_batch([arr_1, arr_2], arr_3)
 
-        if training_step % 1000 == 0:
-            print("Iteration {}, loss={}".format(training_step, loss))
+        if training_step % 1000 == 0 and training_step != 0:
+            print("Iteration {}, loss={}".format(
+                training_step, total_loss / 1000))
+            total_loss = 0
 
-        if training_step % 10000 == 0:
+        if training_step % 10000 == 0 and training_step != 0:
             similarity_callback.run_sim()
+            if total_loss < min_loss:
+                min_loss = total_loss
+                model.save('model-nadam.hd5')
